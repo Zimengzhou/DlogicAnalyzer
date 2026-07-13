@@ -8,12 +8,17 @@ struct Level
     bool high;        /// true=高电平, false=低电平
     ulong start;      /// 起始采样点（含）
     ulong end;        /// 结束采样点（不含），区间为 [start, end)
-    ulong count;      /// 持续采样点数 = end - start
     double duration;  /// 持续时间（秒）；sampleRate=0 时为采样点数
+
+    /// 持续采样点数 = end - start
+    @property ulong count() const @safe @nogc pure
+    {
+        return end - start;
+    }
 }
 
 /// 游程编码：把波形拆成连续的高/低电平段。
-Level[] runs(Waveform w) @safe pure
+Level[] runs(const Waveform w) @safe pure
 {
     Level[] result;
     if (w.samples.length == 0)
@@ -25,13 +30,13 @@ Level[] runs(Waveform w) @safe pure
     {
         if (w.samples[i] != cur)
         {
-            result ~= Level(cur, start, i, i - start, w.countToDuration(i - start));
+            result ~= Level(cur, start, i, w.countToDuration(i - start));
             start = i;
             cur = w.samples[i];
         }
     }
     result ~= Level(cur, start, w.samples.length,
-                    w.samples.length - start, w.countToDuration(w.samples.length - start));
+                    w.countToDuration(w.samples.length - start));
     return result;
 }
 

@@ -5,57 +5,50 @@ import dlogicanalyzer.waveform;
 /// 边沿类型。
 enum EdgeType { rising, falling }
 
-/// 一个跳变边沿：type 为方向，index 为发生跳变的采样点索引（跳变后那一帧）。
+/// 一个跳变边沿：type 为方向，index 为发生跳变后的采样点索引。
 struct Edge
 {
     EdgeType type;
     ulong index;
 }
 
-/// 找出波形中所有上升沿与下降沿。
-Edge[] findEdges(Waveform w) @safe pure
+private Edge[] findEdgesImpl(bool detectRising, bool detectFalling)(const Waveform w) @safe pure
 {
     Edge[] result;
     if (w.samples.length < 2)
         return result;
     for (ulong i = 1; i < w.samples.length; i++)
     {
-        const prev = w.samples[i - 1];
-        const cur = w.samples[i];
-        if (!prev && cur)
-            result ~= Edge(EdgeType.rising, i);
-        else if (prev && !cur)
-            result ~= Edge(EdgeType.falling, i);
+        static if (detectRising)
+        {
+            if (!w.samples[i - 1] && w.samples[i])
+                result ~= Edge(EdgeType.rising, i);
+        }
+        static if (detectFalling)
+        {
+            if (w.samples[i - 1] && !w.samples[i])
+                result ~= Edge(EdgeType.falling, i);
+        }
     }
     return result;
+}
+
+/// 找出波形中所有上升沿与下降沿。
+Edge[] findEdges(const Waveform w) @safe pure
+{
+    return findEdgesImpl!(true, true)(w);
 }
 
 /// 仅找出上升沿。
-Edge[] findRisingEdges(Waveform w) @safe pure
+Edge[] findRisingEdges(const Waveform w) @safe pure
 {
-    Edge[] result;
-    if (w.samples.length < 2)
-        return result;
-    for (ulong i = 1; i < w.samples.length; i++)
-    {
-        if (!w.samples[i - 1] && w.samples[i])
-            result ~= Edge(EdgeType.rising, i);
-    }
-    return result;
+    return findEdgesImpl!(true, false)(w);
 }
 
 /// 仅找出下降沿。
-Edge[] findFallingEdges(Waveform w) @safe pure
+Edge[] findFallingEdges(const Waveform w) @safe pure
 {
-    Edge[] result;
-    if (w.samples.length < 2)
-        return result;
-    for (ulong i = 1; i < w.samples.length; i++)
-    {
-        if (w.samples[i - 1] && !w.samples[i])
-            result ~= Edge(EdgeType.falling, i);
-    }
-    return result;
+    return findEdgesImpl!(false, true)(w);
 }
 
 @safe unittest

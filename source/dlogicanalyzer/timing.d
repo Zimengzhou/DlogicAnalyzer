@@ -2,7 +2,6 @@ module dlogicanalyzer.timing;
 
 import dlogicanalyzer.waveform;
 import dlogicanalyzer.levels;
-import dlogicanalyzer.edges;
 
 /// 周期性/一般波形的时序统计。
 struct TimingStats
@@ -14,8 +13,8 @@ struct TimingStats
     double avgLow;       /// 平均低电平持续时间（秒）
 }
 
-/// 由游程与上升沿推导时序统计。
-TimingStats analyzeTiming(Waveform w) @safe pure
+/// 由游程编码推导时序统计（上升沿从 Level 段之间推导，无需额外遍历）。
+TimingStats analyzeTiming(const Waveform w) @safe pure
 {
     TimingStats s;
     s.period = double.nan;
@@ -30,7 +29,9 @@ TimingStats analyzeTiming(Waveform w) @safe pure
 
     double sumHigh = 0, sumLow = 0;
     ulong nHigh = 0, nLow = 0;
-    foreach (seg; segs)
+    ulong[] risingIndices;
+
+    foreach (i, seg; segs)
     {
         if (seg.high)
         {
@@ -42,18 +43,20 @@ TimingStats analyzeTiming(Waveform w) @safe pure
             sumLow += seg.duration;
             nLow++;
         }
+
+        if (i > 0 && !segs[i - 1].high && seg.high)
+            risingIndices ~= seg.start;
     }
+
     s.avgHigh = nHigh ? sumHigh / nHigh : double.nan;
     s.avgLow = nLow ? sumLow / nLow : double.nan;
 
-    // 周期：相邻上升沿间距的均值（需 >= 2 个上升沿）
-    Edge[] rising = findRisingEdges(w);
-    if (rising.length >= 2)
+    if (risingIndices.length >= 2)
     {
         double periodSum = 0;
-        foreach (i; 1 .. rising.length)
-            periodSum += w.countToDuration(rising[i].index - rising[i - 1].index);
-        s.period = periodSum / cast(double)(rising.length - 1);
+        foreach (i; 1 .. risingIndices.length)
+            periodSum += w.countToDuration(risingIndices[i] - risingIndices[i - 1]);
+        s.period = periodSum / cast(double)(risingIndices.length - 1);
         s.frequency = s.period > 0 ? 1.0 / s.period : double.nan;
         if (s.period > 0 && nHigh > 0)
             s.dutyCycle = s.avgHigh / s.period;

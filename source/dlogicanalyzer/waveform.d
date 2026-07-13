@@ -15,9 +15,15 @@ struct Waveform
     }
 
     /// 采样点总数。
-    @property ulong length() const @safe @nogc pure
+    @property size_t length() const @safe @nogc pure
     {
         return samples.length;
+    }
+
+    /// 波形总时长（秒）；sampleRate 为 0 时退化为采样点数。
+    @property double totalDuration() const @safe @nogc pure
+    {
+        return countToDuration(samples.length);
     }
 }
 

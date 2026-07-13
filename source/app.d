@@ -1,21 +1,18 @@
 import std.stdio;
-import std.format : format;
-import core.sys.windows.windows;
 import dlogicanalyzer.waveform;
 import dlogicanalyzer.edges;
 import dlogicanalyzer.levels;
 import dlogicanalyzer.timing;
 
+version (Windows)
+    import core.sys.windows.windows;
 
 void main()
 {
-    SetConsoleOutputCP(65_001);
+    version (Windows)
+        SetConsoleOutputCP(65_001);
 
     // 示例波形：近似周期性方波
-    // bool[] samples = [false, false,
-    //                   true, true, true, false,
-    //                   true, true, true, false,
-    //                   true, true, true, false, false];
     bool[] samples = [0, 0, 1, 1, 1, 0,0,0,0,0,1,1,1,1,0,0,0,0, 1, 1, 1, 0, 1, 1, 1, 0, 0];
     Waveform w = Waveform(samples, 1000); // 1 kHz 采样
 
