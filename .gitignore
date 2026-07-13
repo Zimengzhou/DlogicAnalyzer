@@ -1,0 +1,17 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/dlogicanalyzer
+dlogicanalyzer.so
+dlogicanalyzer.dylib
+dlogicanalyzer.dll
+libdlogicanalyzer.a
+dlogicanalyzer.a
+dlogicanalyzer.lib
+dlogicanalyzer-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst

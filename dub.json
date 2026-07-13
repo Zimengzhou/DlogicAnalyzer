@@ -1,0 +1,9 @@
+{
+	"description": "logic analyzer",
+	"license": "GPL-3.0-or-later",
+	"authors": [
+		"SZM"
+	],
+	"copyright": "Copyright © 2026, SZM",
+	"name": "dlogicanalyzer"
+}
