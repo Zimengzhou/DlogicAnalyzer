@@ -9,20 +9,24 @@ struct Waveform
     /// 将采样点数换算为时间（秒）；sampleRate 为 0 时直接返回 count。
     double countToDuration(ulong count) const @safe @nogc pure
     {
+        // 采样率为 0 时无法换算时间，直接返回采样点数
         if (sampleRate == 0)
             return cast(double) count;
+        // 采样点数 ÷ 采样率 = 持续秒数
         return cast(double) count / cast(double) sampleRate;
     }
 
     /// 采样点总数。
     @property size_t length() const @safe @nogc pure
     {
+        // 直接委托给数组的 length 属性
         return samples.length;
     }
 
     /// 波形总时长（秒）；sampleRate 为 0 时退化为采样点数。
     @property double totalDuration() const @safe @nogc pure
     {
+        // 用全部采样点数换算总时长
         return countToDuration(samples.length);
     }
 }

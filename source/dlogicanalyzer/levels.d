@@ -2,7 +2,7 @@ module dlogicanalyzer.levels;
 
 import dlogicanalyzer.waveform;
 
-/// 一段连续相同电平的游程。
+/// 一段连续相同电平的游程（Run-Length Encoding 的结果）。
 struct Level
 {
     bool high;        /// true=高电平, false=低电平
@@ -10,31 +10,35 @@ struct Level
     ulong end;        /// 结束采样点（不含），区间为 [start, end)
     double duration;  /// 持续时间（秒）；sampleRate=0 时为采样点数
 
-    /// 持续采样点数 = end - start
+    /// 持续采样点数 = end - start（计算属性，避免数据冗余）。
     @property ulong count() const @safe @nogc pure
     {
         return end - start;
     }
 }
 
-/// 游程编码：把波形拆成连续的高/低电平段。
+/// 游程编码：遍历波形，将连续相同电平合并为一段 Level。
 Level[] runs(const Waveform w) @safe pure
 {
     Level[] result;
+    // 空波形没有电平段
     if (w.samples.length == 0)
         return result;
 
-    ulong start = 0;
-    bool cur = w.samples[0];
+    ulong start = 0;        // 当前段的起始索引
+    bool cur = w.samples[0]; // 当前段的电平值
+    // 从第二个点开始扫描，遇到电平变化时切分一段
     for (ulong i = 1; i < w.samples.length; i++)
     {
         if (w.samples[i] != cur)
         {
+            // 电平翻转，记录上一段并开始新段
             result ~= Level(cur, start, i, w.countToDuration(i - start));
             start = i;
             cur = w.samples[i];
         }
     }
+    // 处理最后一段到波形末尾
     result ~= Level(cur, start, w.samples.length,
                     w.countToDuration(w.samples.length - start));
     return result;

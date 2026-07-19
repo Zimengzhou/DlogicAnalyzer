@@ -12,20 +12,26 @@ struct Edge
     ulong index;
 }
 
+/// 边沿检测的编译期模板实现。
+/// 通过两个布尔模板参数控制是否检测上升沿/下降沿，编译期消除无用分支。
 private Edge[] findEdgesImpl(bool detectRising, bool detectFalling)(const Waveform w) @safe pure
 {
     Edge[] result;
+    // 不足 2 个采样点无法检测跳变，直接返回空数组
     if (w.samples.length < 2)
         return result;
+    // 从第二个采样点开始，逐个与前一个比较
     for (ulong i = 1; i < w.samples.length; i++)
     {
         static if (detectRising)
         {
+            // 前一个为低、当前为高 → 上升沿
             if (!w.samples[i - 1] && w.samples[i])
                 result ~= Edge(EdgeType.rising, i);
         }
         static if (detectFalling)
         {
+            // 前一个为高、当前为低 → 下降沿
             if (w.samples[i - 1] && !w.samples[i])
                 result ~= Edge(EdgeType.falling, i);
         }
@@ -33,19 +39,19 @@ private Edge[] findEdgesImpl(bool detectRising, bool detectFalling)(const Wavefo
     return result;
 }
 
-/// 找出波形中所有上升沿与下降沿。
+/// 找出波形中所有上升沿与下降沿（开启两种边沿检测）。
 Edge[] findEdges(const Waveform w) @safe pure
 {
     return findEdgesImpl!(true, true)(w);
 }
 
-/// 仅找出上升沿。
+/// 仅找出上升沿（只检测 0→1 跳变）。
 Edge[] findRisingEdges(const Waveform w) @safe pure
 {
     return findEdgesImpl!(true, false)(w);
 }
 
-/// 仅找出下降沿。
+/// 仅找出下降沿（只检测 1→0 跳变）。
 Edge[] findFallingEdges(const Waveform w) @safe pure
 {
     return findEdgesImpl!(false, true)(w);
